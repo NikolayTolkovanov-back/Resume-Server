@@ -1,45 +1,51 @@
-import express from 'express'
-import mysql from "mysql";
+import express from "express";
+import mysql from "mysql2/promise";
 import Config from "./src/Config.js";
-import Controller from "./src/Controller.js"
-import Service from "./src/Service.js"
+import Controller from "./src/Controller.js";
+import Service from "./src/Service.js";
 
+async function startServer() {
+  console.log("START SERVER");
 
-const app = express()
-app.use(express.json())
+  const app = express();
+  app.use(express.json());
 
-const config = new Config("./config.json");
+  const config = new Config("./config.json");
 
-const port = config.getParam("server.port");
+  const port = config.getParam("server.port");
 
-const host = config.getParam("db.host");
-const database = config.getParam("db.name");
-const user = config.getParam("db.login");
-const password = config.getParam("db.password");
+  const host = config.getParam("db.host");
+  const database = config.getParam("db.name");
+  const user = config.getParam("db.login");
+  const password = config.getParam("db.password");
 
-const connection = mysql.createConnection({
-  host,
-  user,
-  password,
-  database
-});
+  const connection = await mysql.createConnection({
+    host,
+    user,
+    password,
+    database,
+  });
 
-connection.connect((err) => {
-  if (err) {
-    console.error('error connecting: ' + err.stack);
-    return;
-  }
- 
-  console.log('connected as id ' + connection.threadId);
-});
+  connection.addListener('error', (err) => {
+    throw new Error("error connecting: " + err);
+  });
 
-const service = new Service(connection)
-const controller = new Controller(service)
+  const service = new Service(connection);
+  const controller = new Controller(service);
 
-app.listen(port, () => console.log(`Server listening on port ${port}, address: http://localhost:3000`))
+  app.listen(port, () =>
+    console.log(
+      `Server listening on port ${port}, address: http://localhost:${port}`
+    )
+  );
 
-app.get('/', (req, res) => {
-  res.status(200).send("<p>Persistence yields results<p>")
-})
+  app.get("/", (req, res) => {
+    res.status(200).send("<p>Persistence yields results<p>");
+  });
 
-app.post('/bids', (req, res) => controller.addBid(req, res))
+  app.post("/bids", async (req, res) => {
+    await controller.addBid(req, res)
+  });
+}
+
+startServer();

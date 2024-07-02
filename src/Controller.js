@@ -5,23 +5,24 @@ class Controller {
     this.#service = service;
   }
 
-  addBid(req, res) {
-    
+  async addBid(req, res) {
     const contentType = req.get("Content-Type");
 
     if (contentType === "application/json") {
       const dataFromForm = req.body;
+      // console.log('dataFromForm', dataFromForm);
 
       if (Object.keys(dataFromForm).length === 0) {
         return res.status(400).send("Bad request");
       }
 
-      const { userName, userEmail, userDescription } = dataFromForm;
+      const { userName, userEmail, userPhone, userMessage } = dataFromForm;
 
-      const addedUserBid = this.#service.addBid(
+      const addedUserBid = await this.#service.addBid(
         userName,
         userEmail,
-        userDescription
+        userPhone,
+        userMessage
       );
 
       return res
@@ -35,4 +36,4 @@ class Controller {
   }
 }
 
-export default Controller
+export default Controller;

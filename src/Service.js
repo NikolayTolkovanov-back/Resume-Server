@@ -1,29 +1,44 @@
-
-
 class Service {
   #mysql;
+
   constructor(mysql) {
-    this.#mysql = mysql
+    this.#mysql = mysql;
   }
 
-  addBid(userName, userEmail, userDescription) {
-    if (userName === '' || userEmail === '' || userDescription === '') {
-      return new Error('userName or Email or Description was not received')
+  async addBid(userName, userEmail, userPhone, userMessage) {
+    // console.log(...arguments);
+    if (
+      userName === "" ||
+      userEmail === "" ||
+      userPhone === "" ||
+      userMessage === ""
+    ) {
+      return new Error(
+        "userName or Email or Phone or Message was not received"
+      );
     }
 
-    const sqlQueryInsert = 'INSERT INTO `resume` (user_name, user_email, user_description) VALUES (?, ?, ?);'
-    const sqlQueryGetResult = 'SELECT * FROM `resume` WHERE id = (SELECT MAX(id) FROM `resume`);'
+    const sqlQueryInsert =
+      "INSERT INTO `bids` (user_name, user_email, user_phone, user_message) VALUES (?, ?, ?, ?);";
+    const sqlQueryGetResult =
+      "SELECT * FROM `bids` WHERE id = (SELECT MAX(id) FROM `bids`);";
 
-    this.#mysql.query(sqlQueryInsert, [userName, userEmail, userDescription], function (error, results, fields) {
-      if (error) throw new Error(error);
-    });
+    try {
+      await this.#mysql.execute(sqlQueryInsert, [
+        userName,
+        userEmail,
+        userPhone,
+        userMessage,
+      ]);
 
-    this.#mysql.query(sqlQueryGetResult, function (error, results, fields) {
-      if (error) throw new Error(error);
+      const [rows] = await this.#mysql.query(sqlQueryGetResult)
+      // console.log('rows', rows[0]);
 
-      return results
-    });
+      return rows[0]
+    } catch (error) {
+      throw new Error("error of insert " + error);
+    }
   }
 }
 
-export default Service
+export default Service;
